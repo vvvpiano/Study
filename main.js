@@ -1,5 +1,5 @@
 var http = require('http');
-var fs = require('fs');
+var fs = require('fs'); // fs모듈을 불러와서 fs이름을 붙임 import와 비슷한 개념인가?
 var url = require('url');
 
 function templateHTML(title, list, body){
