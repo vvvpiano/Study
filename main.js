@@ -9,8 +9,19 @@ var app = http.createServer(function(request,response){
 
     if(pathname === '/') {
       if(queryData.id === undefined){
-        fs.readFile(`data/${queryData.id}`, 'utf-8', function(err, description){
+
+        fs.readdir('./data', function(error, filelist){
+          console.log(filelist);
           var title = 'Welcome';
+
+          var list = '<ul>';
+          var i = 0;
+          while(i < filelist.length){
+            list = list + `<li><a href="/?id=${filelist[i]}">${filelist[i]}</a></li>`;
+            i = i + 1;
+          }
+          list = list+'</ul>';
+
           var description = 'Hello, Node.js';
           var template = `
           <!doctype html>
@@ -21,11 +32,7 @@ var app = http.createServer(function(request,response){
           </head>
           <body>
             <h1><a href="/">WEB</a></h1>
-            <ol>
-              <li><a href="/?id=HTML">HTML</a></li>
-              <li><a href="/?id=CSS">CSS</a></li>
-              <li><a href="/?id=JavaScript">JavaScript</a></li>
-            </ol>
+            ${list}
             <h2>${title}</h2>
             <p>${description}</p>
           </body>
@@ -33,8 +40,21 @@ var app = http.createServer(function(request,response){
       `;
         response.writeHead(200);
         response.end(template);
-      });
+        })
+
+
+
     } else {
+      fs.readdir('./data', function(error, filelist){
+        var title = 'Welcome';
+
+        var list = '<ul>';
+        var i = 0;
+        while(i < filelist.length){
+          list = list + `<li><a href="/?id=${filelist[i]}">${filelist[i]}</a></li>`;
+          i = i + 1;
+        }
+        list = list+'</ul>';
       fs.readFile(`data/${queryData.id}`, 'utf-8', function(err, description){
         var title = queryData.id;
         var template = `
@@ -46,11 +66,7 @@ var app = http.createServer(function(request,response){
         </head>
         <body>
           <h1><a href="/">WEB</a></h1>
-          <ol>
-            <li><a href="/?id=HTML">HTML</a></li>
-            <li><a href="/?id=CSS">CSS</a></li>
-            <li><a href="/?id=JavaScript">JavaScript</a></li>
-          </ol>
+          ${list}
           <h2>${title}</h2>
           <p>${description}</p>
         </body>
@@ -58,7 +74,8 @@ var app = http.createServer(function(request,response){
     `;
       response.writeHead(200); // 웹브라우저가 웹서버에 접속했을 때 웹서버가 응답을 할 것. 이 때 잘 됐는지 에러가 있는지 페이지가 옮겨졌는지 등의 내용을 통신할 수 있어야 함. 200은 성공적으로 전송했다는 코드.
       response.end(template);
-    });  //response.end(fs.readFileSync(__dirname + url)); // 사용자가 접속한 url에 따라서 여기에 있는 파일을 읽어주는 코드였음.
+      });  //response.end(fs.readFileSync(__dirname + url)); // 사용자가 접속한 url에 따라서 여기에 있는 파일을 읽어주는 코드였음.
+    });
     }
     } else {
       response.writeHead(404); // 페이지 파일을 찾을 수 없을 때
