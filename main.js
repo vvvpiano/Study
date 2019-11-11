@@ -57,7 +57,12 @@ var app = http.createServer(function(request,response){
       fs.readFile(`data/${queryData.id}`, 'utf-8', function(err, description){
         var title = queryData.id;
         var template = templateHTML(title, list, `<h2>${title}</h2>${description}`,
-        `<a href="/create">create</a> <a href="/update?id=${title}">update</a>`);
+        `<a href="/create">create</a>
+        <a href="/update?id=${title}">update</a>
+        <form action="delete_process" method="post">
+          <input type="hidden" name="id" value="${title}">
+          <input type="submit" value="delete">
+        </form>`);
         response.writeHead(200); // 웹브라우저가 웹서버에 접속했을 때 웹서버가 응답을 할 것. 이 때 잘 됐는지 에러가 있는지 페이지가 옮겨졌는지 등의 내용을 통신할 수 있어야 함. 200은 성공적으로 전송했다는 코드.
         response.end(template);
         });  //response.end(fs.readFileSync(__dirname + url)); // 사용자가 접속한 url에 따라서 여기에 있는 파일을 읽어주는 코드였음.
@@ -98,7 +103,7 @@ var app = http.createServer(function(request,response){
         response.writeHead(302, {Location: `/?id=${title}`}); // 302는 redirection하라는 뜻
         response.end();
       })
-    })
+    });
   } else if(pathname === '/update') {
     fs.readdir('./data', function(error, filelist){
       var list = templateList(filelist);
@@ -119,6 +124,36 @@ var app = http.createServer(function(request,response){
       response.writeHead(200);
       response.end(template);
       });
+    });
+  } else if(pathname === '/update_process'){
+    var body = '';
+    request.on('data', function(data){
+      body = body + data;
+    });
+    request.on('end', function(){
+      var post = qs.parse(body);
+      var id = post.id;
+      var title = post.title;
+      var description = post.description;
+      fs.rename(`./data/${id}`, `data/${title}`, function(error){ // 넘겨받은 id는 수정되기 전의 파일 이름, title은 새로 입력받아 수정되었을 수도 있는 파일 이름임을 주의!, 이 라인에서 파일 이름을 title로 바꿨으니 아래 콜백함수에서 data/title으로 파일을 찾는 것이 자연스러움.
+        fs.writeFile(`data/${title}`, description, 'utf-8', function(err){
+          response.writeHead(302, {Location: `/?id=${title}`});
+          response.end();
+        })
+      });
+    });
+  } else if(pathname === '/delete_process'){
+    var body = '';
+    request.on('data', function(data){
+      body = body + data;
+    });
+    request.on('end', function(){
+      var post = qs.parse(body);
+      var id = post.id;
+      fs.unlink(`data/${id}`, function(error){
+        response.writeHead(302, {Location: `/`});
+        response.end();
+      })
     });
   }
     else {
