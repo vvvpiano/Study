@@ -3,6 +3,37 @@ var fs = require('fs'); // fs모듈을 불러와서 fs이름을 붙임 import와
 var url = require('url');
 var qs = require('querystring');
 
+var template = {
+  HTML : function(title, list, body, control){
+    return  `
+    <!doctype html>
+    <html>
+    <head>
+      <title>WEB1 - ${title}</title>
+      <meta charset="utf-8">
+    </head>
+    <body>
+      <h1><a href="/">WEB</a></h1>
+      ${list}
+      ${control}
+      ${body}
+    </body>
+    </html>
+    `;
+  },
+  list : function(filelist){
+    var list = '<ul>';
+    var i = 0;
+    while(i < filelist.length){
+      list = list + `<li><a href="/?id=${filelist[i]}">${filelist[i]}</a></li>`;
+      i = i + 1;
+    }
+    list = list+'</ul>';
+    return list;
+  }
+}
+
+
 function templateHTML(title, list, body, control){
   return  `
   <!doctype html>
@@ -21,7 +52,7 @@ function templateHTML(title, list, body, control){
 `;
 }
 
-function templateList(filelist){
+function templatelist(filelist){
   var list = '<ul>';
   var i = 0;
   while(i < filelist.length){
@@ -44,19 +75,19 @@ var app = http.createServer(function(request,response){
         fs.readdir('./data', function(error, filelist){
           var title = 'Welcome';
           var description = 'Hello, Node.js';
-          var list = templateList(filelist);
-          var template = templateHTML(title, list, `
+          var list = template.list(filelist);
+          var html = template.HTML(title, list, `
             <h2>${title}</h2>${description}`,
           `<a href="/create">create</a>`);
-        response.writeHead(200);
-        response.end(template);
+          response.writeHead(200);
+          response.end(html);
         });
       } else {
       fs.readdir('./data', function(error, filelist){
-        var list = templateList(filelist);
+        var list = template.list(filelist);
       fs.readFile(`data/${queryData.id}`, 'utf-8', function(err, description){
         var title = queryData.id;
-        var template = templateHTML(title, list, `<h2>${title}</h2>${description}`,
+        var html = template.HTML(title, list, `<h2>${title}</h2>${description}`,
         `<a href="/create">create</a>
         <a href="/update?id=${title}">update</a>
         <form action="delete_process" method="post">
@@ -64,15 +95,15 @@ var app = http.createServer(function(request,response){
           <input type="submit" value="delete">
         </form>`);
         response.writeHead(200); // 웹브라우저가 웹서버에 접속했을 때 웹서버가 응답을 할 것. 이 때 잘 됐는지 에러가 있는지 페이지가 옮겨졌는지 등의 내용을 통신할 수 있어야 함. 200은 성공적으로 전송했다는 코드.
-        response.end(template);
+        response.end(html);
         });  //response.end(fs.readFileSync(__dirname + url)); // 사용자가 접속한 url에 따라서 여기에 있는 파일을 읽어주는 코드였음.
       });
     }
   } else if(pathname === '/create'){
       fs.readdir('./data', function(error, filelist){
         var title = 'WEB - create';
-        var list = templateList(filelist);
-        var template = templateHTML(title, list, `
+        var list = template.list(filelist);
+        var html = template.HTML(title, list, `
           <form action="/create_process" method="post">
             <p><input type="text" name="title" placeholder="title"></p>
             <p>
@@ -84,7 +115,7 @@ var app = http.createServer(function(request,response){
           </form>
           `,'');
       response.writeHead(200); // 200은 성공했다는 뜻
-      response.end(template);
+      response.end(html);
       });
   } else if(pathname === '/create_process'){
     var body = '';
@@ -106,10 +137,10 @@ var app = http.createServer(function(request,response){
     });
   } else if(pathname === '/update') {
     fs.readdir('./data', function(error, filelist){
-      var list = templateList(filelist);
+      var list = template.list(filelist);
     fs.readFile(`data/${queryData.id}`, 'utf-8', function(err, description){
       var title = queryData.id;
-      var template = templateHTML(title, list,
+      var html = template.HTML(title, list,
         `<form action="/update_process" method="post">
           <input type="hidden" name="id" value="${title}"> <!--숨겨서 안보임, 하지만 submit버튼을 눌렀을 때 id라는 이름으로 value가 전송이 될 것.(title이 수정된다면)-->
           <p><input type="text" name="title" placeholder="title" value="${title}"></p>
@@ -122,7 +153,7 @@ var app = http.createServer(function(request,response){
         </form>`,
         `<a href="/create">create</a> <a href="/update?id=${title}">update</a>`);
       response.writeHead(200);
-      response.end(template);
+      response.end(html);
       });
     });
   } else if(pathname === '/update_process'){
