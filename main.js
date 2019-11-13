@@ -1,38 +1,9 @@
 var http = require('http');
-var fs = require('fs'); // fs모듈을 불러와서 fs이름을 붙임 import와 비슷한 개념인가?
+var fs = require('fs'); // fs모듈을 불러와서 fs이름을 붙임 import와 비슷한 개념인가? => 맞음!
 var url = require('url');
 var qs = require('querystring');
-
-var template = {
-  HTML : function(title, list, body, control){
-    return  `
-    <!doctype html>
-    <html>
-    <head>
-      <title>WEB1 - ${title}</title>
-      <meta charset="utf-8">
-    </head>
-    <body>
-      <h1><a href="/">WEB</a></h1>
-      ${list}
-      ${control}
-      ${body}
-    </body>
-    </html>
-    `;
-  },
-  list : function(filelist){
-    var list = '<ul>';
-    var i = 0;
-    while(i < filelist.length){
-      list = list + `<li><a href="/?id=${filelist[i]}">${filelist[i]}</a></li>`;
-      i = i + 1;
-    }
-    list = list+'</ul>';
-    return list;
-  }
-}
-
+var template = require('./lib/template.js')
+var path = require('path'); //  경로 세탁을 위함
 
 function templateHTML(title, list, body, control){
   return  `
@@ -84,8 +55,9 @@ var app = http.createServer(function(request,response){
         });
       } else {
       fs.readdir('./data', function(error, filelist){
+        var filteredId = path.parse(queryData.id).base; // 외부에서 들어오는 파일을 읽는 부분을 점검할 필요가 있음. queryData.id => 경로정보, 경로정보를 세탁하는 코드.
+      fs.readFile(`data/${filteredId}`, 'utf-8', function(err, description){
         var list = template.list(filelist);
-      fs.readFile(`data/${queryData.id}`, 'utf-8', function(err, description){
         var title = queryData.id;
         var html = template.HTML(title, list, `<h2>${title}</h2>${description}`,
         `<a href="/create">create</a>
@@ -138,7 +110,8 @@ var app = http.createServer(function(request,response){
   } else if(pathname === '/update') {
     fs.readdir('./data', function(error, filelist){
       var list = template.list(filelist);
-    fs.readFile(`data/${queryData.id}`, 'utf-8', function(err, description){
+      var filteredId = path.parse(queryData.id).base;
+    fs.readFile(`data/${filteredId}`, 'utf-8', function(err, description){
       var title = queryData.id;
       var html = template.HTML(title, list,
         `<form action="/update_process" method="post">
@@ -181,7 +154,8 @@ var app = http.createServer(function(request,response){
     request.on('end', function(){
       var post = qs.parse(body);
       var id = post.id;
-      fs.unlink(`data/${id}`, function(error){
+      var filteredId = path.parse(id).base;
+      fs.unlink(`data/${filteredId}`, function(error){
         response.writeHead(302, {Location: `/`});
         response.end();
       })
