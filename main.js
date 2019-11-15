@@ -4,6 +4,7 @@ var url = require('url');
 var qs = require('querystring');
 var template = require('./lib/template.js')
 var path = require('path'); //  경로 세탁을 위함
+var sanitizeHtml = require('sanitize-html');
 
 function templateHTML(title, list, body, control){
   return  `
@@ -59,11 +60,14 @@ var app = http.createServer(function(request,response){
       fs.readFile(`data/${filteredId}`, 'utf-8', function(err, description){
         var list = template.list(filelist);
         var title = queryData.id;
-        var html = template.HTML(title, list, `<h2>${title}</h2>${description}`,
+        var sanitizedTitle = sanitizeHtml(title);
+        var sanitizedDescription = sanitizeHtml(discription);
+        var html = template.HTML(title, list,
+          `<h2>${sanitizedTitle}</h2>${sanitizedDescription}`,
         `<a href="/create">create</a>
-        <a href="/update?id=${title}">update</a>
+        <a href="/update?id=${sanitizedTitle}">update</a>
         <form action="delete_process" method="post">
-          <input type="hidden" name="id" value="${title}">
+          <input type="hidden" name="id" value="${sanitizedTitle}">
           <input type="submit" value="delete">
         </form>`);
         response.writeHead(200); // 웹브라우저가 웹서버에 접속했을 때 웹서버가 응답을 할 것. 이 때 잘 됐는지 에러가 있는지 페이지가 옮겨졌는지 등의 내용을 통신할 수 있어야 함. 200은 성공적으로 전송했다는 코드.
