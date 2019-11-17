@@ -61,7 +61,9 @@ var app = http.createServer(function(request,response){
         var list = template.list(filelist);
         var title = queryData.id;
         var sanitizedTitle = sanitizeHtml(title);
-        var sanitizedDescription = sanitizeHtml(discription);
+        var sanitizedDescription = sanitizeHtml(description,{
+          allowedTags: ['h1']
+        });
         var html = template.HTML(title, list,
           `<h2>${sanitizedTitle}</h2>${sanitizedDescription}`,
         `<a href="/create">create</a>
